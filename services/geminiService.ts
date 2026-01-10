@@ -2,11 +2,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Transaction, TransactionType, AccountType } from "../types";
 
-// Initialize the Google GenAI client with API key from environment
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Helper to get AI instance safely
+const getAI = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("API_KEY is missing from environment variables.");
+    return null;
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 export const getSmartInsights = async (transactions: Transaction[]): Promise<string> => {
   if (transactions.length === 0) return "Add transactions to get personalized tips!";
+
+  const ai = getAI();
+  if (!ai) return "Connect to the internet and set your API key to get smart insights.";
 
   const summary = transactions.slice(0, 50).map(t => ({
     type: t.type,
@@ -46,6 +56,9 @@ export const getSmartInsights = async (transactions: Transaction[]): Promise<str
  * Parses unstructured transaction text into a structured Transaction object.
  */
 export const parseTransactionNotification = async (text: string, currentBSYear: number): Promise<Partial<Transaction> | null> => {
+  const ai = getAI();
+  if (!ai) return null;
+
   const prompt = `
     Analyze the following transaction notification text and extract details in JSON.
     Current BS Year: ${currentBSYear}.
