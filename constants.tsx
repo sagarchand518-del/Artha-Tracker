@@ -34,11 +34,20 @@ export const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export const AVAILABLE_ICONS = [
-  'fa-utensils', 'fa-car', 'fa-home', 'fa-shopping-bag', 'fa-file-invoice-dollar',
-  'fa-heartbeat', 'fa-film', 'fa-ellipsis-h', 'fa-wallet', 'fa-laptop-code',
-  'fa-gift', 'fa-chart-line', 'fa-plus-circle', 'fa-coffee', 'fa-graduation-cap',
-  'fa-plane', 'fa-dumbbell', 'fa-gamepad', 'fa-dog', 'fa-camera', 'fa-tshirt',
-  'fa-tools', 'fa-tv', 'fa-mobile-alt', 'fa-right-left'
+  'fa-utensils', 'fa-burger', 'fa-pizza-slice', 'fa-bowl-food', 'fa-mug-hot', 'fa-coffee',
+  'fa-car', 'fa-bus', 'fa-train', 'fa-plane', 'fa-bicycle', 'fa-motorcycle', 'fa-gas-pump',
+  'fa-house', 'fa-building', 'fa-couch', 'fa-bed', 'fa-bath', 'fa-plug', 'fa-droplet', 'fa-bolt', 'fa-wifi',
+  'fa-shopping-bag', 'fa-cart-shopping', 'fa-bag-shopping', 'fa-shirt', 'fa-gem',
+  'fa-file-invoice-dollar', 'fa-credit-card', 'fa-receipt', 'fa-wallet', 'fa-money-bill-wave', 'fa-coins', 'fa-bank', 'fa-vault',
+  'fa-heart-pulse', 'fa-capsules', 'fa-stethoscope', 'fa-hospital', 'fa-spa', 'fa-scissors', 'fa-soap',
+  'fa-film', 'fa-gamepad', 'fa-music', 'fa-tv', 'fa-ticket', 'fa-palette', 'fa-camera',
+  'fa-book', 'fa-graduation-cap', 'fa-school', 'fa-microscope',
+  'fa-laptop-code', 'fa-mobile-screen-button', 'fa-headphones', 'fa-sim-card',
+  'fa-gift', 'fa-chart-line', 'fa-briefcase', 'fa-hand-holding-dollar', 'fa-landmark', 'fa-piggy-bank',
+  'fa-dumbbell', 'fa-person-running', 'fa-mountain', 'fa-umbrella-beach',
+  'fa-dog', 'fa-cat', 'fa-paw', 'fa-baby', 'fa-tree', 'fa-shield-heart',
+  'fa-tools', 'fa-broom', 'fa-wine-glass', 'fa-bottle-water',
+  'fa-right-left', 'fa-plus-circle', 'fa-ellipsis-h', 'fa-star', 'fa-circle-info'
 ];
 
 export const AVAILABLE_COLORS = [

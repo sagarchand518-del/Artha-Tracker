@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Transaction, TransactionType, Category, Budget, FinancialGoal, DashboardWidget, WidgetConfig, AccountType, AccountBalances, UserProfile, AppNotification } from './types';
 import Dashboard from './components/Dashboard';
@@ -147,98 +148,150 @@ const INITIAL_DASHBOARD_CONFIG: WidgetConfig[] = [
 
 const WelcomeSplash: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
+  const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
 
   const steps = [
     {
       icon: "fa-coins",
       title: "Artha Tracker",
       subtitle: "Personal Finance, Simplified",
-      description: "Take control of your financial life with elegance and ease. Track every rupee.",
-      color: "bg-brand-500",
-      textColor: "text-brand-600"
+      description: "Take control of your financial life with elegance and ease. Track every rupee precisely.",
+      gradient: "from-brand-500 to-orange-400",
+      accent: "text-brand-600",
+      bgClass: "bg-brand-500"
     },
     {
       icon: "fa-calendar-days",
       title: "Nepali Calendar",
       subtitle: "Native BS Support",
       description: "Designed for Nepal. Seamlessly switch between Bikram Sambat and Gregorian dates.",
-      color: "bg-rose-500",
-      textColor: "text-rose-600"
+      gradient: "from-rose-500 to-pink-400",
+      accent: "text-rose-600",
+      bgClass: "bg-rose-500"
     },
     {
       icon: "fa-wand-magic-sparkles",
       title: "Smart Insights",
       subtitle: "Gemini AI Powered",
-      description: "Get personalized financial tips and transaction parsing powered by advanced AI.",
-      color: "bg-indigo-600",
-      textColor: "text-indigo-600"
+      description: "Get personalized financial tips and automatic notification parsing powered by AI.",
+      gradient: "from-indigo-600 to-blue-500",
+      accent: "text-indigo-600",
+      bgClass: "bg-indigo-600"
     },
     {
       icon: "fa-bullseye",
       title: "Reach Goals",
       subtitle: "Dream Big",
-      description: "Set savings targets and watch your progress grow. Build your future today.",
-      color: "bg-emerald-500",
-      textColor: "text-emerald-600"
+      description: "Set savings targets and watch your wealth grow. Build your financial future today.",
+      gradient: "from-emerald-500 to-teal-400",
+      accent: "text-emerald-600",
+      bgClass: "bg-emerald-500"
     }
   ];
 
   const handleNext = () => {
     if (step < steps.length - 1) {
+      setDirection('forward');
       setStep(prev => prev + 1);
     } else {
       onComplete();
     }
   };
 
+  const handleBack = () => {
+    if (step > 0) {
+      setDirection('backward');
+      setStep(prev => prev - 1);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-white dark:bg-[#0a0c12] z-[2000] flex flex-col items-center justify-center p-6 overflow-hidden">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-indigo-50/50 dark:from-slate-900 dark:to-[#0a0c12] opacity-80"></div>
-      
-      {/* Animated Blobs */}
-      <div className={`absolute top-[-10%] left-[-10%] w-96 h-96 rounded-full blur-[120px] opacity-20 animate-pulse transition-colors duration-700 ${steps[step].color}`}></div>
-      <div className={`absolute bottom-[-10%] right-[-10%] w-96 h-96 rounded-full blur-[120px] opacity-20 animate-pulse delay-700 transition-colors duration-700 ${steps[step].color}`}></div>
+    <div className="fixed inset-0 bg-white dark:bg-[#0a0c12] z-[2000] flex flex-col items-center justify-center p-6 overflow-hidden transition-colors duration-1000">
+      {/* Dynamic Animated Background Blobs */}
+      <div className={`absolute top-[-20%] left-[-20%] w-[150%] h-[150%] bg-gradient-to-br ${steps[step].gradient} opacity-[0.03] dark:opacity-[0.05] transition-all duration-1000 rounded-full animate-slow-spin`}></div>
+      <div className={`absolute top-[-10%] left-[-10%] w-96 h-96 rounded-full blur-[120px] opacity-20 animate-pulse transition-all duration-1000 ${steps[step].bgClass}`}></div>
+      <div className={`absolute bottom-[-10%] right-[-10%] w-96 h-96 rounded-full blur-[120px] opacity-20 animate-pulse delay-700 transition-all duration-1000 ${steps[step].bgClass}`}></div>
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col h-[70vh] justify-between">
-        <div className="flex justify-end">
-           <button onClick={onComplete} className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Skip</button>
+      <div className="relative z-10 w-full max-w-sm flex flex-col h-[85vh] justify-between">
+        <div className="flex justify-between items-center">
+           {step > 0 ? (
+             <button onClick={handleBack} className="h-10 w-10 flex items-center justify-center rounded-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 transition-all active:scale-90">
+                <i className="fa-solid fa-arrow-left"></i>
+             </button>
+           ) : <div className="w-10 h-10" />}
+           <button onClick={onComplete} className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-600 transition-colors">Skip</button>
         </div>
 
-        <div key={step} className="flex flex-col items-center text-center space-y-8 animate-in slide-in-from-right-8 fade-in duration-500">
-          <div className={`h-32 w-32 ${steps[step].color} rounded-[2.5rem] flex items-center justify-center text-white text-5xl shadow-2xl shadow-slate-200 dark:shadow-none rotate-3 transition-transform hover:rotate-6`}>
-            <i className={`fa-solid ${steps[step].icon}`}></i>
+        <div className="flex-1 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+          <div 
+            key={step} 
+            className={`flex flex-col items-center gap-8 animate-in ${direction === 'forward' ? 'slide-in-from-right-12' : 'slide-in-from-left-12'} fade-in duration-700 ease-out`}
+          >
+            {/* Playful Interactive Icon Container */}
+            <div className={`h-40 w-40 bg-gradient-to-br ${steps[step].gradient} rounded-[3.5rem] flex items-center justify-center text-white text-6xl shadow-2xl ring-8 ring-white dark:ring-slate-900 transition-all duration-500 hover:scale-110 hover:rotate-6 group cursor-default`}>
+              <i className={`fa-solid ${steps[step].icon} group-hover:animate-bounce-short`}></i>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="inline-block px-4 py-1.5 rounded-full bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 animate-in slide-in-from-bottom-4 duration-1000 delay-200">
+                <span className={`text-[10px] font-black uppercase tracking-[0.25em] ${steps[step].accent}`}>{steps[step].subtitle}</span>
+              </div>
+              
+              <h1 className="text-5xl font-black text-slate-800 dark:text-white tracking-tighter leading-none animate-in slide-in-from-bottom-6 duration-1000 delay-400">
+                {steps[step].title}
+              </h1>
+              
+              <p className="text-lg font-medium text-slate-500 dark:text-slate-400 leading-relaxed max-w-[280px] mx-auto animate-in slide-in-from-bottom-8 duration-1000 delay-600">
+                {steps[step].description}
+              </p>
+            </div>
           </div>
-          
-          <div className="space-y-2">
-            <h2 className={`text-sm font-black uppercase tracking-[0.2em] ${steps[step].textColor}`}>{steps[step].subtitle}</h2>
-            <h1 className="text-4xl font-black text-slate-800 dark:text-white tracking-tight leading-none">{steps[step].title}</h1>
-          </div>
-          
-          <p className="text-lg font-medium text-slate-500 dark:text-slate-400 leading-relaxed px-2">
-            {steps[step].description}
-          </p>
         </div>
 
-        <div className="flex flex-col items-center gap-8">
-          <div className="flex gap-2">
+        <div className="flex flex-col items-center gap-10">
+          {/* Enhanced Progress Indicator */}
+          <div className="flex gap-2.5">
             {steps.map((_, i) => (
-              <div 
+              <button 
                 key={i} 
-                className={`h-2 rounded-full transition-all duration-300 ${i === step ? `w-8 ${steps[step].color}` : 'w-2 bg-slate-200 dark:bg-slate-800'}`} 
+                onClick={() => {
+                  setDirection(i > step ? 'forward' : 'backward');
+                  setStep(i);
+                }}
+                className={`h-2.5 rounded-full transition-all duration-500 ease-spring ${i === step ? `w-10 ${steps[step].bgClass}` : 'w-2.5 bg-slate-200 dark:bg-slate-800'}`} 
               />
             ))}
           </div>
 
           <button 
             onClick={handleNext} 
-            className={`w-full py-5 text-white rounded-[2rem] font-black text-lg shadow-xl shadow-slate-200 dark:shadow-none transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${steps[step].color}`}
+            className={`group w-full py-5 text-white rounded-[2rem] font-black text-lg shadow-xl transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-4 ${steps[step].bgClass} shadow-${steps[step].bgClass}/20`}
           >
-            {step === steps.length - 1 ? 'Get Started' : 'Next'}
-            <i className="fa-solid fa-arrow-right text-sm"></i>
+            <span className="tracking-tight">{step === steps.length - 1 ? 'Start Journey' : 'Continue'}</span>
+            <i className={`fa-solid ${step === steps.length - 1 ? 'fa-rocket' : 'fa-arrow-right'} text-sm transition-transform group-hover:translate-x-1`}></i>
           </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes slow-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .animate-slow-spin {
+          animation: slow-spin 30s linear infinite;
+        }
+        @keyframes bounce-short {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        .group-hover\\:animate-bounce-short:hover, .animate-bounce-short {
+          animation: bounce-short 0.8s ease-in-out infinite;
+        }
+        .ease-spring {
+          transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+      `}</style>
     </div>
   );
 };
@@ -633,7 +686,7 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      {/* Undo Snackbar */}
+      {/* Global Undo Snackbar */}
       {showUndoSnackbar && (
         <div className="fixed bottom-24 lg:bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-full shadow-2xl z-[3000] flex items-center gap-4 animate-in slide-in-from-bottom-10 fade-in duration-300">
           <span className="text-sm font-bold">Transaction deleted</span>
@@ -658,7 +711,15 @@ const App: React.FC = () => {
       {/* Modals & Overlays */}
       {isFormOpen && <TransactionForm categories={categories} transactions={transactions} initialBalances={initialBalances} onAdd={handleAddTransaction} onUpdate={handleUpdateTransaction} initialData={editingTransaction} onClose={() => setIsFormOpen(false)} />}
       {isTransferOpen && <TransferForm transactions={transactions} initialBalances={initialBalances} goals={goals} onTransfer={handleTransfer} onClose={() => setIsTransferOpen(false)} />}
-      {isHistoryOpen && <TransactionHistory transactions={transactions} categories={categories} onEdit={(t) => { setEditingTransaction(t); setIsFormOpen(true); }} onDelete={handleDeleteTransaction} onClose={() => setIsHistoryOpen(false)} />}
+      {isHistoryOpen && <TransactionHistory 
+          transactions={transactions} 
+          categories={categories} 
+          onEdit={(t) => { setEditingTransaction(t); setIsFormOpen(true); }} 
+          onDelete={handleDeleteTransaction} 
+          onUndo={handleUndoDelete}
+          showUndo={showUndoSnackbar}
+          onClose={() => setIsHistoryOpen(false)} 
+        />}
       {isBudgetStatusOpen && <BudgetStatus transactions={transactions} categories={categories} budgets={budgets} currentBSDate={currentBS} onOpenManager={() => { setIsBudgetStatusOpen(false); setIsBudgetManagerOpen(true); }} onClose={() => setIsBudgetStatusOpen(false)} />}
       {isBudgetManagerOpen && <BudgetManager categories={categories} budgets={budgets} transactions={transactions} onSave={setBudgets} onClose={() => setIsBudgetManagerOpen(false)} currentBSDate={currentBS} />}
       {isGoalManagerOpen && <FinancialGoalManager goals={goals} onSave={setGoals} onClose={() => setIsGoalManagerOpen(false)} />}
@@ -678,7 +739,7 @@ const App: React.FC = () => {
 
       {isMoreMenuOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-end justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[2.5rem] p-6 space-y-1 animate-in slide-in-from-bottom-10">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm rounded-[2.5rem] p-6 space-y-1 animate-in slide-in-from-bottom-10">
             <div className="flex justify-between items-center mb-4"><h2 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">More Actions</h2><button onClick={() => setIsMoreMenuOpen(false)} className="text-slate-400"><i className="fa-solid fa-xmark"></i></button></div>
             {[
               { label: 'Transfer Funds', icon: 'fa-right-left', color: 'text-indigo-600', onClick: () => { setIsTransferOpen(true); setIsMoreMenuOpen(false); } },
