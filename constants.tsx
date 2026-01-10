@@ -1,0 +1,49 @@
+
+import { Category, TransactionType } from './types';
+
+export const BS_MONTHS = [
+  "Baisakh", "Jestha", "Ashadh", "Shrawan", "Bhadra", "Ashwin",
+  "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"
+];
+
+export const BS_MONTHS_NEPALI = [
+  "वैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज",
+  "कात्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"
+];
+
+export const BS_DAYS_NEPALI = [
+  "आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"
+];
+
+export const DEFAULT_CATEGORIES: Category[] = [
+  { id: 'food', name: 'Food', icon: 'fa-utensils', color: 'bg-orange-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'transport', name: 'Transport', icon: 'fa-car', color: 'bg-blue-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'rent', name: 'Rent', icon: 'fa-home', color: 'bg-purple-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'shopping', name: 'Shopping', icon: 'fa-shopping-bag', color: 'bg-pink-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'bills', name: 'Bills', icon: 'fa-file-invoice-dollar', color: 'bg-red-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'health', name: 'Health', icon: 'fa-heartbeat', color: 'bg-emerald-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'entertainment', name: 'Entertainment', icon: 'fa-film', color: 'bg-indigo-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'transfer-exp', name: 'Transfer', icon: 'fa-right-left', color: 'bg-slate-600', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'other', name: 'Other', icon: 'fa-ellipsis-h', color: 'bg-gray-500', type: TransactionType.EXPENSE, isDefault: true },
+  { id: 'salary', name: 'Salary', icon: 'fa-wallet', color: 'bg-green-600', type: TransactionType.INCOME, isDefault: true },
+  { id: 'freelance', name: 'Freelance', icon: 'fa-laptop-code', color: 'bg-teal-500', type: TransactionType.INCOME, isDefault: true },
+  { id: 'gift', name: 'Gift', icon: 'fa-gift', color: 'bg-amber-500', type: TransactionType.INCOME, isDefault: true },
+  { id: 'investment', name: 'Investment', icon: 'fa-chart-line', color: 'bg-lime-600', type: TransactionType.INCOME, isDefault: true },
+  { id: 'transfer-inc', name: 'Transfer', icon: 'fa-right-left', color: 'bg-slate-600', type: TransactionType.INCOME, isDefault: true },
+  { id: 'other-inc', name: 'Other', icon: 'fa-plus-circle', color: 'bg-gray-600', type: TransactionType.INCOME, isDefault: true },
+];
+
+export const AVAILABLE_ICONS = [
+  'fa-utensils', 'fa-car', 'fa-home', 'fa-shopping-bag', 'fa-file-invoice-dollar',
+  'fa-heartbeat', 'fa-film', 'fa-ellipsis-h', 'fa-wallet', 'fa-laptop-code',
+  'fa-gift', 'fa-chart-line', 'fa-plus-circle', 'fa-coffee', 'fa-graduation-cap',
+  'fa-plane', 'fa-dumbbell', 'fa-gamepad', 'fa-dog', 'fa-camera', 'fa-tshirt',
+  'fa-tools', 'fa-tv', 'fa-mobile-alt', 'fa-right-left'
+];
+
+export const AVAILABLE_COLORS = [
+  'bg-slate-500', 'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500',
+  'bg-lime-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500',
+  'bg-sky-500', 'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500',
+  'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500'
+];
