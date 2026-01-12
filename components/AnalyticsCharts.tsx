@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { Transaction, TransactionType, Category } from '../types';
 import { BS_MONTHS } from '../constants';
@@ -20,72 +20,80 @@ interface ExpensePieChartProps {
 
 export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({ transactions, currentBSDate }) => {
   const data = useMemo(() => {
-    // Robust date parsing
+    // Default safety
     const safeDate = currentBSDate || '2082-01-01';
     const separator = safeDate.includes('/') ? '/' : '-';
     const dateParts = safeDate.split(separator);
     
-    // Fallback if parsing fails
     if (dateParts.length < 2) return [];
 
     const curYear = parseInt(dateParts[0], 10);
-    const curMonthRaw = parseInt(dateParts[1], 10); // 1-based month
-    const currentMonthIndex = isNaN(curMonthRaw) ? 0 : curMonthRaw - 1; // 0-based index
+    const curMonthRaw = parseInt(dateParts[1], 10);
+    // Convert 1-based month to 0-based index safely
+    const currentMonthIndex = isNaN(curMonthRaw) ? 0 : Math.max(0, curMonthRaw - 1);
 
-    const last6Months = [];
+    const chartData = [];
     
-    // Generate last 6 months buckets
+    // Generate buckets for the last 6 months
     for (let i = 5; i >= 0; i--) {
       let mIndex = currentMonthIndex - i;
       let y = curYear;
       
-      // Adjust for year boundaries
+      // Handle year wrap-around for previous months
       while (mIndex < 0) {
         mIndex += 12;
         y -= 1;
       }
       
-      // Handle edge case where mIndex might exceed 11 (unlikely with this loop but safe to keep)
+      // Safety modulo
       mIndex = mIndex % 12;
 
-      last6Months.push({ 
-        monthIndex: mIndex + 1, // Store as 1-based for matching
+      chartData.push({ 
+        monthIndex: mIndex + 1, // Store as 1-based for transaction matching
         year: y, 
         name: BS_MONTHS[mIndex] ? BS_MONTHS[mIndex].substring(0, 3) : 'UNK', 
-        income: 0, 
-        expense: 0 
+        fullDate: `${BS_MONTHS[mIndex]} ${y}`,
+        Income: 0, 
+        Expense: 0 
       });
     }
 
     // Aggregate transactions
-    transactions.forEach(t => {
-      if (!t.bsDate) return;
-      const tSep = t.bsDate.includes('/') ? '/' : '-';
-      const tParts = t.bsDate.split(tSep);
-      if (tParts.length < 2) return;
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(t => {
+        if (!t.bsDate) return;
+        
+        const tSep = t.bsDate.includes('/') ? '/' : '-';
+        const tParts = t.bsDate.split(tSep);
+        if (tParts.length < 2) return;
 
-      const y = parseInt(tParts[0], 10);
-      const m = parseInt(tParts[1], 10);
-      
-      if (isNaN(y) || isNaN(m)) return;
+        const y = parseInt(tParts[0], 10);
+        const m = parseInt(tParts[1], 10);
+        
+        if (isNaN(y) || isNaN(m)) return;
 
-      // Find matching bucket
-      const entry = last6Months.find(d => d.monthIndex === m && d.year === y);
-      if (entry) {
-        if (t.type === TransactionType.INCOME) {
-          entry.income += (t.amount || 0);
-        } else {
-          entry.expense += (t.amount || 0);
+        // Find the correct bucket
+        const entry = chartData.find(d => d.monthIndex === m && d.year === y);
+        if (entry) {
+          if (t.type === TransactionType.INCOME) {
+            entry.Income += (t.amount || 0);
+          } else if (t.type === TransactionType.EXPENSE) {
+            entry.Expense += (t.amount || 0);
+          }
         }
-      }
-    });
+      });
+    }
 
-    return last6Months;
+    return chartData;
   }, [transactions, currentBSDate]);
 
+  // Calculate max value for nice Y-axis scaling
+  const maxValue = Math.max(...data.map(d => Math.max(d.Income, d.Expense)), 1000);
+  const hasData = data.some(d => d.Income > 0 || d.Expense > 0);
+
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 h-[320px] flex flex-col w-full">
-      <div className="flex items-center gap-3 mb-4 shrink-0">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 h-[340px] flex flex-col w-full relative overflow-hidden">
+      <div className="flex items-center gap-3 mb-6 shrink-0 z-10">
         <div className="h-10 w-10 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center text-lg">
           <i className="fa-solid fa-chart-column"></i>
         </div>
@@ -94,43 +102,68 @@ export const IncomeExpenseChart: React.FC<IncomeExpenseChartProps> = ({ transact
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Income vs Expense (Last 6 Months)</p>
         </div>
       </div>
+
       <div className="flex-1 w-full min-h-0 relative">
-        {/* Absolute positioning wrapper to force size within flex container */}
-        <div className="absolute inset-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
-                tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
-              />
-              <Tooltip 
-                cursor={{ fill: '#f1f5f9', opacity: 0.4 }}
-                contentStyle={{ 
-                  borderRadius: '16px', 
-                  border: 'none', 
-                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', 
-                  padding: '16px', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: 'blur(4px)'
-                }}
-                labelStyle={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-                itemStyle={{ fontSize: '12px', fontWeight: '600', padding: '2px 0' }}
-              />
-              <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} barSize={12} animationDuration={1000} />
-              <Bar dataKey="expense" name="Expense" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={12} animationDuration={1000} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {hasData ? (
+          <div className="absolute inset-0">
+            <ResponsiveContainer width="99%" height="100%">
+              <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 0 }} barGap={2}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.3} />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} 
+                  tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
+                  domain={[0, 'auto']}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9', opacity: 0.4 }}
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', 
+                    padding: '16px', 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(4px)',
+                    zIndex: 100
+                  }}
+                  labelStyle={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+                />
+                <Legend 
+                  iconType="circle" 
+                  iconSize={8}
+                  wrapperStyle={{ paddingTop: '10px', fontSize: '12px', fontWeight: '600' }} 
+                />
+                <Bar 
+                  dataKey="Income" 
+                  fill="#10b981" 
+                  radius={[6, 6, 6, 6]} 
+                  barSize={12} 
+                  animationDuration={1500} 
+                />
+                <Bar 
+                  dataKey="Expense" 
+                  fill="#f43f5e" 
+                  radius={[6, 6, 6, 6]} 
+                  barSize={12} 
+                  animationDuration={1500} 
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600">
+             <i className="fa-solid fa-chart-simple text-4xl mb-3 opacity-20"></i>
+             <p className="text-xs font-bold uppercase tracking-widest opacity-50">No activity yet</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -147,47 +180,47 @@ export const ExpenseBreakdownChart: React.FC<ExpensePieChartProps> = ({ transact
     const categoryTotals: Record<string, number> = {};
     let total = 0;
 
-    transactions.forEach(t => {
-      if (t.type !== TransactionType.EXPENSE || !t.bsDate) return;
-      
-      const tSep = t.bsDate.includes('/') ? '/' : '-';
-      const tParts = t.bsDate.split(tSep);
-      if (tParts.length < 2) return;
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(t => {
+        if (t.type !== TransactionType.EXPENSE || !t.bsDate) return;
+        
+        const tSep = t.bsDate.includes('/') ? '/' : '-';
+        const tParts = t.bsDate.split(tSep);
+        if (tParts.length < 2) return;
 
-      const y = parseInt(tParts[0], 10);
-      const m = parseInt(tParts[1], 10);
-      
-      if (y === curYear && m === curMonth) {
-        categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
-        total += t.amount;
-      }
-    });
+        const y = parseInt(tParts[0], 10);
+        const m = parseInt(tParts[1], 10);
+        
+        if (y === curYear && m === curMonth) {
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+          total += t.amount;
+        }
+      });
+    }
 
     const result = Object.entries(categoryTotals)
       .map(([catId, value]) => {
         const cat = categories.find(c => c.id === catId);
-        // Fallback color logic
+        // Robust color fallback
         let color = '#94a3b8';
         if (cat) {
-          if (cat.color.includes('orange')) color = '#f97316';
-          else if (cat.color.includes('blue')) color = '#3b82f6';
-          else if (cat.color.includes('purple')) color = '#a855f7';
-          else if (cat.color.includes('pink')) color = '#ec4899';
-          else if (cat.color.includes('red')) color = '#ef4444';
-          else if (cat.color.includes('emerald')) color = '#10b981';
-          else if (cat.color.includes('indigo')) color = '#6366f1';
-          else if (cat.color.includes('teal')) color = '#14b8a6';
-          else if (cat.color.includes('amber')) color = '#f59e0b';
-          else if (cat.color.includes('lime')) color = '#84cc16';
-          else if (cat.color.includes('gray')) color = '#6b7280';
-          else if (cat.color.includes('slate')) color = '#64748b';
-          else if (cat.color.includes('yellow')) color = '#eab308';
-          else if (cat.color.includes('cyan')) color = '#06b6d4';
-          else if (cat.color.includes('violet')) color = '#8b5cf6';
-          else if (cat.color.includes('fuchsia')) color = '#d946ef';
-          else if (cat.color.includes('rose')) color = '#f43f5e';
-          else if (cat.color.includes('sky')) color = '#0ea5e9';
-          else if (cat.color.includes('green')) color = '#22c55e';
+            // Mapping tailwind bg classes to hex codes roughly
+            if (cat.color.includes('orange')) color = '#f97316';
+            else if (cat.color.includes('blue')) color = '#3b82f6';
+            else if (cat.color.includes('purple')) color = '#a855f7';
+            else if (cat.color.includes('pink')) color = '#ec4899';
+            else if (cat.color.includes('red')) color = '#ef4444';
+            else if (cat.color.includes('emerald')) color = '#10b981';
+            else if (cat.color.includes('indigo')) color = '#6366f1';
+            else if (cat.color.includes('teal')) color = '#14b8a6';
+            else if (cat.color.includes('amber')) color = '#f59e0b';
+            else if (cat.color.includes('lime')) color = '#84cc16';
+            else if (cat.color.includes('slate')) color = '#64748b';
+            else if (cat.color.includes('yellow')) color = '#eab308';
+            else if (cat.color.includes('cyan')) color = '#06b6d4';
+            else if (cat.color.includes('rose')) color = '#f43f5e';
+            else if (cat.color.includes('sky')) color = '#0ea5e9';
+            else if (cat.color.includes('green')) color = '#22c55e';
         }
 
         return {
@@ -198,13 +231,13 @@ export const ExpenseBreakdownChart: React.FC<ExpensePieChartProps> = ({ transact
         };
       })
       .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+      .slice(0, 5); // Top 5 categories
 
     return { result, total };
   }, [transactions, categories, currentBSDate]);
 
   return (
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 h-[320px] flex flex-col w-full">
+    <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 h-[340px] flex flex-col w-full">
       <div className="flex items-center gap-3 mb-2 shrink-0">
         <div className="h-10 w-10 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-xl flex items-center justify-center text-lg">
           <i className="fa-solid fa-chart-pie"></i>
@@ -220,7 +253,7 @@ export const ExpenseBreakdownChart: React.FC<ExpensePieChartProps> = ({ transact
       {data.total > 0 ? (
         <div className="flex-1 w-full min-h-0 flex items-center relative">
           <div className="w-1/2 h-full relative">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="99%" height="100%">
               <PieChart>
                 <Pie
                   data={data.result}
@@ -256,7 +289,7 @@ export const ExpenseBreakdownChart: React.FC<ExpensePieChartProps> = ({ transact
             </div>
           </div>
           
-          <div className="w-1/2 pl-2 space-y-2 overflow-y-auto max-h-[200px] no-scrollbar">
+          <div className="w-1/2 pl-2 space-y-2 overflow-y-auto max-h-[220px] no-scrollbar">
             {data.result.map((item, i) => (
               <div key={i} className="flex items-center gap-2">
                  <div className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }}></div>
@@ -271,7 +304,7 @@ export const ExpenseBreakdownChart: React.FC<ExpensePieChartProps> = ({ transact
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
           <i className="fa-solid fa-chart-pie text-4xl mb-2 opacity-20"></i>
-          <p className="text-xs font-bold">No expenses this month</p>
+          <p className="text-xs font-bold uppercase tracking-widest opacity-50">No expenses found</p>
         </div>
       )}
     </div>

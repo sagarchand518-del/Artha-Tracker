@@ -28,6 +28,34 @@ interface BudgetAlertData {
   spent: number;
 }
 
+// Helper to safely load data from localStorage
+const getStoredData = <T,>(key: string, defaultValue: T, dateFields: string[] = []): T => {
+  try {
+    const item = localStorage.getItem(key);
+    if (!item) return defaultValue;
+    
+    const parsed = JSON.parse(item);
+    
+    // Handle Date object restoration for arrays (like transactions)
+    if (dateFields.length > 0 && Array.isArray(parsed)) {
+      return parsed.map((item: any) => {
+        const newItem = { ...item };
+        dateFields.forEach(field => {
+          if (newItem[field]) {
+             newItem[field] = new Date(newItem[field]);
+          }
+        });
+        return newItem;
+      }) as unknown as T;
+    }
+    
+    return parsed;
+  } catch (error) {
+    console.error(`Error loading ${key} from localStorage:`, error);
+    return defaultValue;
+  }
+};
+
 const BudgetBreachAlert: React.FC<{ data: BudgetAlertData; onClose: () => void }> = ({ data, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 8000);
@@ -299,20 +327,50 @@ const WelcomeSplash: React.FC<{ onComplete: () => void }> = ({ onComplete }) => 
 };
 
 const App: React.FC = () => {
-  const [showWelcome, setShowWelcome] = useState<boolean>(true);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [goals, setGoals] = useState<FinancialGoal[]>([]);
-  const [initialBalances, setInitialBalances] = useState<AccountBalances>({ cash: 0, bank: 0, esewa: 0, khalti: 0 });
-  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>(INITIAL_DASHBOARD_CONFIG);
-  const [appPassword, setAppPassword] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [darkMode, setDarkMode] = useState<boolean>(localStorage.getItem('artha_dark_mode') === 'true');
+  // Use lazy initialization for all states to prevent content flashing and ensure immediate data availability
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => !sessionStorage.getItem('artha_seen_welcome'));
   
+  const [transactions, setTransactions] = useState<Transaction[]>(() => 
+    getStoredData<Transaction[]>('artha_transactions', [], ['adDate'])
+  );
+  
+  const [categories, setCategories] = useState<Category[]>(() => 
+    getStoredData<Category[]>('artha_categories', DEFAULT_CATEGORIES)
+  );
+  
+  const [budgets, setBudgets] = useState<Budget[]>(() => 
+    getStoredData<Budget[]>('artha_budgets', [])
+  );
+  
+  const [goals, setGoals] = useState<FinancialGoal[]>(() => 
+    getStoredData<FinancialGoal[]>('artha_goals', [])
+  );
+  
+  const [initialBalances, setInitialBalances] = useState<AccountBalances>(() => 
+    getStoredData<AccountBalances>('artha_balances', { cash: 0, bank: 0, esewa: 0, khalti: 0 })
+  );
+  
+  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>(() => 
+    getStoredData<WidgetConfig[]>('artha_dashboard_config', INITIAL_DASHBOARD_CONFIG)
+  );
+  
+  const [appPassword, setAppPassword] = useState<string | null>(() => 
+    localStorage.getItem('artha_password')
+  );
+  
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => 
+    getStoredData<UserProfile | null>('artha_profile', null)
+  );
+  
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => 
+    getStoredData<AppNotification[]>('artha_notifications', [])
+  );
+
+  const [isLocked, setIsLocked] = useState<boolean>(() => !!localStorage.getItem('artha_password'));
+  
+  const [darkMode, setDarkMode] = useState<boolean>(() => localStorage.getItem('artha_dark_mode') === 'true');
+  
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isTransferOpen, setIsTransferOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -352,8 +410,6 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const seenWelcome = sessionStorage.getItem('artha_seen_welcome');
-    if (seenWelcome) setShowWelcome(false);
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener('online', handleOnline);
@@ -370,27 +426,7 @@ const App: React.FC = () => {
     localStorage.setItem('artha_dark_mode', darkMode.toString());
   }, [darkMode]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('artha_transactions');
-    if (saved) setTransactions(JSON.parse(saved).map((t: any) => ({ ...t, adDate: new Date(t.adDate) })));
-    const savedCats = localStorage.getItem('artha_categories');
-    if (savedCats) setCategories(JSON.parse(savedCats));
-    const savedBudgets = localStorage.getItem('artha_budgets');
-    if (savedCats) setBudgets(JSON.parse(savedBudgets || '[]'));
-    const savedGoals = localStorage.getItem('artha_goals');
-    if (savedGoals) setGoals(JSON.parse(savedGoals));
-    const savedBalances = localStorage.getItem('artha_balances');
-    if (savedBalances) setInitialBalances(JSON.parse(savedBalances));
-    const savedConfig = localStorage.getItem('artha_dashboard_config');
-    if (savedConfig) setDashboardConfig(JSON.parse(savedConfig));
-    const savedPwd = localStorage.getItem('artha_password');
-    if (savedPwd) { setAppPassword(savedPwd); setIsLocked(true); }
-    const savedProf = localStorage.getItem('artha_profile');
-    if (savedProf) setUserProfile(JSON.parse(savedProf));
-    const savedNotifs = localStorage.getItem('artha_notifications');
-    if (savedNotifs) setNotifications(JSON.parse(savedNotifs));
-  }, []);
-
+  // Saving data effects (these run when data changes)
   useEffect(() => localStorage.setItem('artha_transactions', JSON.stringify(transactions)), [transactions]);
   useEffect(() => localStorage.setItem('artha_categories', JSON.stringify(categories)), [categories]);
   useEffect(() => localStorage.setItem('artha_budgets', JSON.stringify(budgets)), [budgets]);
