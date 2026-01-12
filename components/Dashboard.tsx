@@ -1,6 +1,8 @@
+
 import React, { useState, useMemo } from 'react';
 import { Transaction, TransactionType, Category, Budget, FinancialGoal, DashboardWidget, WidgetConfig, AccountBalances, AccountType } from '../types';
 import { BS_MONTHS } from '../constants';
+import { IncomeExpenseChart, ExpenseBreakdownChart } from './AnalyticsCharts';
 
 interface DashboardProps {
   transactions: Transaction[];
@@ -139,6 +141,16 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         );
 
+      case DashboardWidget.INCOME_VS_EXPENSE:
+        return (
+          <IncomeExpenseChart transactions={transactions} currentBSDate={currentBSDate} />
+        );
+
+      case DashboardWidget.EXPENSE_BREAKDOWN:
+        return (
+          <ExpenseBreakdownChart transactions={transactions} categories={categories} currentBSDate={currentBSDate} />
+        );
+
       case DashboardWidget.BUDGET_PROGRESS:
         const { monthSpent, monthBudget } = currentMonthStats;
         const utilization = monthBudget > 0 ? Math.min((monthSpent / monthBudget) * 100, 100) : 0;
@@ -239,11 +251,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         );
 
       case DashboardWidget.INCOME_COMPARISON:
-         // This widget is currently not utilized in the default view logic or data props in App.tsx
-         // but if enabled via config, it should render blank or placeholder if no logic passed
-         // Since logic is not fully passed in this version of Dashboard.tsx (simplified for this task), 
-         // I'll render a placeholder or the actual component if we had the logic from the previous iteration.
-         // Re-implementing the component from the read file context:
          return (
           <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-4 h-full">
             <div className="flex items-center gap-3">
@@ -276,7 +283,8 @@ const Dashboard: React.FC<DashboardProps> = ({
          const component = renderWidget(widget);
          if (!component) return null;
          
-         const isFullWidth = widget.id === DashboardWidget.SUMMARY_CARDS;
+         const isFullWidth = widget.id === DashboardWidget.SUMMARY_CARDS || 
+                             widget.id === DashboardWidget.INCOME_VS_EXPENSE;
          
          return (
            <div key={widget.id} className={isFullWidth ? "col-span-1 xl:col-span-2" : "col-span-1"}>

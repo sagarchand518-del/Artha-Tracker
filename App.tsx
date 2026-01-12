@@ -141,6 +141,8 @@ const NotificationCenter: React.FC<{
 
 const INITIAL_DASHBOARD_CONFIG: WidgetConfig[] = [
   { id: DashboardWidget.SUMMARY_CARDS, visible: true, label: 'Financial Summary' },
+  { id: DashboardWidget.INCOME_VS_EXPENSE, visible: true, label: 'Income vs Expense' },
+  { id: DashboardWidget.EXPENSE_BREAKDOWN, visible: true, label: 'Expense Breakdown' },
   { id: DashboardWidget.BUDGET_PROGRESS, visible: true, label: 'Monthly Budget Progress' },
   { id: DashboardWidget.GOALS_SUMMARY, visible: true, label: 'Goals Summary' },
   { id: DashboardWidget.INCOME_COMPARISON, visible: false, label: 'Income Growth Analysis' },
@@ -437,8 +439,8 @@ const App: React.FC = () => {
     const prevPercentage = previousSpent / budget.amount;
     const newPercentage = newTotalSpent / budget.amount;
 
-    // Logic for 90% Warning
-    if (prevPercentage < 0.9 && newPercentage >= 0.9 && newPercentage <= 1.0) {
+    // Logic for 80% Warning (Updated from 90%)
+    if (prevPercentage < 0.8 && newPercentage >= 0.8 && newPercentage <= 1.0) {
       setBudgetAlert({
         type: 'WARNING',
         categoryName: category?.name || 'Category',
@@ -449,8 +451,8 @@ const App: React.FC = () => {
       });
       addNotification({
         type: 'BUDGET_WARNING',
-        title: 'Budget Alert: 90% Reached',
-        message: `You've used over 90% of your ${category?.name} budget. Spent: Rs. ${newTotalSpent.toLocaleString()} / ${budget.amount.toLocaleString()}`,
+        title: 'Budget Alert: 80% Reached',
+        message: `You've used over 80% of your ${category?.name} budget. Spent: Rs. ${newTotalSpent.toLocaleString()} / ${budget.amount.toLocaleString()}`,
         categoryIcon: category?.icon,
         categoryColor: category?.color
       });
@@ -723,7 +725,16 @@ const App: React.FC = () => {
       {isBudgetStatusOpen && <BudgetStatus transactions={transactions} categories={categories} budgets={budgets} currentBSDate={currentBS} onOpenManager={() => { setIsBudgetStatusOpen(false); setIsBudgetManagerOpen(true); }} onClose={() => setIsBudgetStatusOpen(false)} />}
       {isBudgetManagerOpen && <BudgetManager categories={categories} budgets={budgets} transactions={transactions} onSave={setBudgets} onClose={() => setIsBudgetManagerOpen(false)} currentBSDate={currentBS} />}
       {isGoalManagerOpen && <FinancialGoalManager goals={goals} onSave={setGoals} onClose={() => setIsGoalManagerOpen(false)} />}
-      {isCatManagerOpen && <CategoryManager categories={categories} onAdd={(c) => setCategories(prev => [...prev, c])} onUpdate={(c) => setCategories(prev => prev.map(old => old.id === c.id ? c : old))} onDelete={(id) => setCategories(prev => prev.filter(c => c.id !== id))} onClose={() => setIsCatManagerOpen(false)} />}
+      {isCatManagerOpen && (
+        <CategoryManager 
+          categories={categories} 
+          onAdd={(c) => setCategories(prev => [...prev, c])} 
+          onUpdate={(c) => setCategories(prev => prev.map(old => old.id === c.id ? c : old))} 
+          onDelete={(id) => setCategories(prev => prev.filter(c => c.id !== id))} 
+          onReorder={(newCats) => setCategories(newCats)}
+          onClose={() => setIsCatManagerOpen(false)} 
+        />
+      )}
       {isAccountManagerOpen && <AccountSettings initialBalances={initialBalances} onSave={setInitialBalances} onClose={() => setIsAccountManagerOpen(false)} />}
       {isSettingsOpen && <DashboardSettings config={dashboardConfig} onChange={setDashboardConfig} onClose={() => setIsSettingsOpen(false)} appPassword={appPassword} onSetPassword={(p) => { setAppPassword(p); if(p) localStorage.setItem('artha_password', p); else localStorage.removeItem('artha_password'); }} darkMode={darkMode} onToggleDarkMode={() => setDarkMode(!darkMode)} />}
       {isExportOpen && <ExportManager transactions={transactions} categories={categories} onClose={() => setIsExportOpen(false)} currentBSDate={currentBS} />}

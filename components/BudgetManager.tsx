@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Category, TransactionType, Budget, Transaction } from '../types';
 import { BS_MONTHS } from '../constants';
@@ -57,7 +58,8 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ categories, budgets, tran
         const budgetVal = parseFloat(budgetInput);
         if (!isNaN(budgetVal) && budgetVal > 0) {
           if (spent > budgetVal) over++;
-          else if (spent > budgetVal * 0.85) approaching++;
+          // Updated check to 80% from 85%
+          else if (spent > budgetVal * 0.8) approaching++;
         }
       }
     });
@@ -141,7 +143,7 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ categories, budgets, tran
                 <p className={`text-xs font-medium mt-1 leading-snug ${alertSummary.over > 0 ? 'text-rose-600 dark:text-rose-300' : 'text-amber-600 dark:text-amber-300'}`}>
                   {alertSummary.over > 0 
                     ? `You have exceeded the budget for ${alertSummary.over} categor${alertSummary.over === 1 ? 'y' : 'ies'}. Adjust limits or review spending.` 
-                    : `${alertSummary.approaching} categor${alertSummary.approaching === 1 ? 'y is' : 'ies are'} nearing the set limit (85%+ used).`}
+                    : `${alertSummary.approaching} categor${alertSummary.approaching === 1 ? 'y is' : 'ies are'} nearing the set limit (80%+ used).`}
                 </p>
               </div>
             </div>
@@ -152,7 +154,8 @@ const BudgetManager: React.FC<BudgetManagerProps> = ({ categories, budgets, tran
             const budgetInput = localBudgets[cat.id];
             const budgetVal = parseFloat(budgetInput) || 0;
             const isOver = budgetVal > 0 && spent > budgetVal;
-            const isApproaching = budgetVal > 0 && spent > budgetVal * 0.85 && spent <= budgetVal;
+            // Updated check to 80% from 85%
+            const isApproaching = budgetVal > 0 && spent > budgetVal * 0.8 && spent <= budgetVal;
 
             return (
               <div key={cat.id} className="space-y-2">
